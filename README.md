@@ -1,0 +1,2 @@
+# emojihash
+secure emojihash map
