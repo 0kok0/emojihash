@@ -9,7 +9,7 @@ arbitrary length binary alphabet {0,1}^* ->  {😳....😠}^* to a subset of a u
 -   The image alphabet MUST contain a subset of size 2^n s.t. the map can operate on n bits. 
     If this constraint is violated, the map is not collision resistant. 
 -   The emoji_hash can be used for compression; 
-    given an emoji alphabet size of 2**10, hex strings are compressed by ~ 20% 
+    given an emoji alphabet size of 2**10, hex strings are compressed by ~ 60% 
 -   The emoji_hash depends on the order of the image alphabet. Therefore, the image alphabet MUST be 
     hardcoded/securely distributed with the application generating/verifying hashes 
 """
