@@ -1,7 +1,8 @@
-### First approach to calculate the number of partitions of N=25 into K in {2...N} parts with numbers between a and b (here always 1 and N-1)
+# First approach to calculate the number of partitions of N=25 into K in {2...N} parts
+# with numbers between a and b (here always 1 and N-1)
 
 import itertools
-from more_itertools import pairwise
+import string
 
 def k_partition(n, k, a, b):
     if k == 1 and a <= n <= b:
@@ -13,43 +14,33 @@ def k_partition(n, k, a, b):
 
 
 N = 5
+lower_bound_k = 2
+upper_bound_k = N-1
 n_parts = 0
 result = []
-for k in range(2,N+1):
+for k in range(lower_bound_k,upper_bound_k+1):
     L = list(k_partition(N, k, 1, N-1))
-    print("Number of partitions of length", k, "is:", len(L))
-    print(L)
+    #print("Number of partitions of length", k, "is:", len(L))
+    #print(L)
     result += L
     n_parts += len(L)
 
-print("Final number of partitions ", n_parts )
-
-print("Final list", result)
-
+print("Final number of partitions", n_parts )
+print("Final list without colores", result)
 
 
-######### add colors NOT FINISHED YET
-colors = ["blue", "green", "red","yellow","grey"]
+
+### add colors to list
+# create a list of 32 elements representing the 32 colors.
+#colors = list(string.ascii_uppercase) + ['aa','bb','cc','dd','ee','ff','gg']
+colors = ["A","B","C","D","E","F"]
 colored_circles = []
 for circle in result:
-    if len(circle) > 3:
-        perm_colors = list(itertools.combinations_with_replacement(colors, len(circle)))
-        for perm_col in perm_colors:
-            include = True
-            for x in list(zip(perm_col[-1:] + perm_col[:-1], perm_col, perm_col[1:] + perm_col[:1])):
-                if x[0]==x[1] or x[1] == x[2]:
-                    include = False
-                    #print(x, len(circle), perm_col)
-            if(include):
-                print(len(circle), perm_col)
-                circle_col = circle + list(perm_col)
-                colored_circles.append(circle_col)
-    else:
         perm_colors = list(itertools.permutations(colors, len(circle)))
         for perm_col in perm_colors:
             circle_col = circle + list(perm_col)
             colored_circles.append(circle_col)
 
 
-
-print(colored_circles)
+print("Final list of colored combinations", colored_circles)
+print(len(colored_circles),"colored circles for circle length N =", N,"and segment length k from", lower_bound_k,"to",upper_bound_k,"and",len(colors),"colors")
