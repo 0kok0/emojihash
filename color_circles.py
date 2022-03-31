@@ -1,3 +1,5 @@
+import math
+import random
 from math import factorial as fac
 from itertools import groupby
 
@@ -87,32 +89,84 @@ def index_to_circle(i):
     """
     # 1 segments
     if i < 16:
-        return extract(i - 0, 10, 1, [1, 16])
+        return extract(i - 0, 30, 1, [1, 16])
     # 2 segments
-    if i < 2176:
-        return extract(i - 16, 10, 2, [9, 16, 15])
+    if i < 6976:
+        return extract(i - 16, 30, 2, [29, 16, 15])
     # 3 segments
-    if i < 123136:
-        return extract(i - 2176, 10, 3, [36, 16, 15, 14])
+    if i < 1371136:
+        return extract(i - 6976, 30, 3, [406, 16, 15, 14])
     # 4 segments
-    if i < 3792256:
-        return extract(i - 123136, 10, 4, [84, 16, 15, 14, 13])
+    if i < 160977856:
+        return extract(i - 1371136, 30, 4, [3654, 16, 15, 14, 13])
     # 5 segments
-    if i < 69836416:
-        return extract(i - 3792256, 10, 5, [126, 16, 15, 14, 13, 12])
+    if i < 12610302016:
+        return extract(i - 160977856, 30, 5, [23751, 16, 15, 14, 13, 12])
     # 6 segments
-    if i < 796322176:
-        return extract(i - 69836416, 10, 6, [126, 16, 15, 14, 13, 12, 11])
+    if i < 697323130816:
+        return extract(i - 12610302016, 30, 6, [118755, 16, 15, 14, 13, 12, 11])
     # 7 segments
-    if i < 5639560576:
-        return extract(i - 796322176, 10, 7, [84, 16, 15, 14, 13, 12, 11, 10])
+    if i < 28085836282816:
+        return extract(i - 697323130816, 30, 7, [475020, 16, 15, 14, 13, 12, 11, 10])
     # 8 segments
-    if i < 24320622976:
-        return extract(i - 5639560576, 10, 8, [36, 16, 15, 14, 13, 12, 11, 10, 9])
+    if i < 838003296634816:
+        return extract(i - 28085836282816, 30, 8, [1560780, 16, 15, 14, 13, 12, 11, 10, 9])
     # 9 segments
-    if i < 61682747776:
-        return extract(i - 24320622976, 10, 9, [9, 16, 15, 14, 13, 12, 11, 10, 9, 8])
+    if i < 18656187424378816:
+        return extract(i - 838003296634816, 30, 9, [4292145, 16, 15, 14, 13, 12, 11, 10, 9, 8])
     # 10 segments
-    if i < 90742178176:
-        return extract(i - 61682747776, 10, 10, [1, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7])
+    if i < 309686528177530816:
+        return extract(i - 18656187424378816, 30, 10, [10015005, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7])
 
+
+def polar_to_xy(cx, cy, radius, angle_rad):
+    x = cx + radius * math.cos(angle_rad)
+    y = cy + radius * math.sin(angle_rad)
+
+    return x, y
+
+def make_arc(x, y, radius, start_angle, end_angle):
+    startx,starty = polar_to_xy(x, y, radius, end_angle)
+    endx,endy = polar_to_xy(x, y, radius, start_angle)
+
+    large_arc_flag = (end_angle - start_angle) > math.pi
+    #sweep_flag = end_angle > start_angle ? 0 : 1; //sic
+
+    move = f'M {startx:.4f},{starty:.4f} '
+    arc = f'A {radius:.4f},{radius:.4f} 0 {int(large_arc_flag)} 0 {endx:.4f},{endy:.4f}'
+
+    return move + arc
+
+def circle_to_svg(segments, colors):
+    COLOR_LIST = [
+        '#ff0000', '#ffa3a3', # red
+        '#ffa100', '#ffdda3', # orange
+        '#24db00', '#b3eaa9', # green
+        '#00ebac', '#b9fae9', # teal
+        '#00b2ff', '#70d4ff', # cyan
+        '#0045e5', '#819fe5', # blue
+        '#5c0aff', '#b18aff', # purple
+        '#c00ddb', '#f08fff', # pink
+    ]
+
+    angles = [0.0]
+    total_segment = sum(segments)
+    segment_start = 0
+    for s in segments:
+        segment_start += s
+        angles.append(segment_start / total_segment * math.tau)
+
+    paths = []
+    for i, col in enumerate(colors):
+        d = make_arc(0, 0, 100, angles[i], angles[i+1])
+        path = f'<path d="{d}" fill="none" stroke="{COLOR_LIST[col]}" stroke-width="30" />'
+        paths.append(path)
+
+    return f'<svg width="100px" version="1.1" viewBox="-120 -120 240 240" xmlns="http://www.w3.org/2000/svg">{"".join(paths)}</svg>'
+
+def index_to_svg(i):
+    return circle_to_svg(*index_to_circle(i))
+
+if __name__ == '__main__':
+    #print(index_to_svg(912423234))
+    print(''.join(index_to_svg(random.randint(0, 309686528177530816)) for _ in range(256)))

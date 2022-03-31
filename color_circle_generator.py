@@ -41,5 +41,5 @@ def generate_ranges(slices: int, max_segments: int, colors: int):
         i += count
 
 if __name__ == '__main__':
-    generate_ranges(10, 10, 16)
+    generate_ranges(30, 10, 16)
 
