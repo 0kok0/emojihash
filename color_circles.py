@@ -75,7 +75,7 @@ def extract(index, N, K, bases):
     # The bases are arranged [partition base, color 1, color 2, ...]
     [partition, *colors] = extract_digits(index, bases)
     # Now we go from partition index to segment lengths. I think this part could be made more efficient
-    unranked = perm_unrank(partition, '*' * N + '|' * (K - 1))
+    unranked = perm_unrank(partition, '*' * (N - K) + '|' * (K - 1))
     segments = [len(s) + 1 for s in unranked.split('|')]
     return (segments, adjust_colors(colors))
 
