@@ -1,15 +1,8 @@
 import math
 import random
-from math import factorial as fac
+from math import factorial as fac, comb
 from itertools import groupby
 
-
-def compress_digits(digits, bases):
-    """ Turns a set of digits and their bases into a single number """
-    n = 0
-    for digit, base in zip(digits[::-1], bases[::-1]):
-        n = (n * base) + digit
-    return n
 
 def extract_digits(n, bases):
     """ Turns a number into a set of digits given a list of bases """
@@ -19,73 +12,84 @@ def extract_digits(n, bases):
         digits.append(digit)
     return digits
 
-# Perm functions from https://codegolf.stackexchange.com/a/115024 and likely
-# can be made more efficient by making them less general
 
-def perm_count(s):
-    """Count the total number of permutations of sorted sequence `s`"""
-    n = fac(len(s))
-    for _, g in groupby(s):
-        n //= fac(sum(1 for u in g))
-    return n
+# https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
+def star_bars_count(s, b):
+    """ Determines the number of permutations for this star and bar configuration """
+    return comb(s + b, b)
 
-def perm_rank(target, base):
-    """Determine the permutation rank of string `target`
-    given the rank zero permutation string `base`,
-    i.e., the chars in `base` are in lexicographic order.
+
+def star_bars_unrank(rank, stars, bars, groups=None):
     """
-    if len(target) < 2:
-        return 0
-    total = 0
-    head, newtarget = target[0], target[1:]
-    for i, c in enumerate(base):
-        newbase = base[:i] + base[i + 1 :]
-        if c == head:
-            return total + perm_rank(newtarget, newbase)
-        elif i and c == base[i - 1]:
-            continue
-        total += perm_count(newbase)
+    Determine the group counts associated with the rank
+    for a given star and bar configuration.
+    Based off of perm_unrank from https://codegolf.stackexchange.com/a/115024
 
-def perm_unrank(rank, base, head=''):
-    ''' Determine the permutation with given rank of the 
-        rank zero permutation string `base`.
-    '''
-    if len(base) < 2:
-        return head + ''.join(base)
+    It works by building up the star and bar permutation by choosing either
+    a star or a bar to add. We remove the string representation of the
+    permutation here and just store the group counts that correspond to the
+    particular star and bar arrangement.
+    i.e. **||*| = [2, 0, 1, 0]
+    """
+    if groups == None:
+        groups = [0]
 
-    total = 0
-    for i, c in enumerate(base):
-        if i < 1 or c != base[i-1]:
-            newbase = base[:i] + base[i+1:]
-            newtotal = total + perm_count(newbase)
-            if newtotal > rank:
-                return perm_unrank(rank - total, newbase, head + c)
-            total = newtotal
+    if (stars + bars) < 2:
+        if bars == 1:
+            groups.append(0)
+
+        if stars == 1:
+            groups[-1] += 1
+
+        return groups
+
+    # Possible arrangements if we remove 1 star
+    star_count = star_bars_count(stars - 1, bars)
+
+    # We're adding a star, so the last group increments
+    if star_count > rank:
+        groups[-1] += 1
+        return star_bars_unrank(rank, stars - 1, bars, groups)
+
+    # Possible arrangements if we remove 1 bar
+    bar_count = star_bars_count(stars, bars - 1)
+
+    # We're adding a bar, so we're adding a new group
+    if (star_count + bar_count) > rank:
+        groups.append(0)
+        return star_bars_unrank(rank - star_count, stars, bars - 1, groups)
+
 
 def adjust_colors(colors):
     """
     The original color index list needs to be processed so that each
     index is in reference to the entire list of colors. Before processing
     each subsequent index assumes the previous color was removed.
+
+    This way 0,0,0 becomes 0,1,2 because the second and third 0 are indexed
+    assuming the previous 0's are popped off. So when the are inserted back
+    in, the seconds 0's become 1 and 2 respectively.
     """
     adjusted = []
     for i, c in enumerate(colors):
+        # A color index needs to be incremented as many times as there are
+        # colors that were used before it that were at a lower index than it
         adjusted.append(c + sum(c >= o for o in colors[:i]))
     return adjusted
+
 
 def extract(index, N, K, bases):
     # The bases are arranged [partition base, color 1, color 2, ...]
     [partition, *colors] = extract_digits(index, bases)
-    # Now we go from partition index to segment lengths. I think this part could be made more efficient
-    unranked = perm_unrank(partition, '*' * (N - K) + '|' * (K - 1))
-    segments = [len(s) + 1 for s in unranked.split('|')]
+    # Now we go from partition index to segment lengths
+    segments = [s + 1 for s in star_bars_unrank(partition, N - K, K - 1)]
     return (segments, adjust_colors(colors))
 
 
 def index_to_circle(i):
     """
     Returns a tuple of circle segments lengths and colors based on an integer
-    between 0 and 90742178176.
+    between 0 and 309686528177530816.
     """
     # 1 segments
     if i < 16:
@@ -118,55 +122,5 @@ def index_to_circle(i):
     if i < 309686528177530816:
         return extract(i - 18656187424378816, 30, 10, [10015005, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7])
 
-
-def polar_to_xy(cx, cy, radius, angle_rad):
-    x = cx + radius * math.cos(angle_rad)
-    y = cy + radius * math.sin(angle_rad)
-
-    return x, y
-
-def make_arc(x, y, radius, start_angle, end_angle):
-    startx,starty = polar_to_xy(x, y, radius, end_angle)
-    endx,endy = polar_to_xy(x, y, radius, start_angle)
-
-    large_arc_flag = (end_angle - start_angle) > math.pi
-    #sweep_flag = end_angle > start_angle ? 0 : 1; //sic
-
-    move = f'M {startx:.4f},{starty:.4f} '
-    arc = f'A {radius:.4f},{radius:.4f} 0 {int(large_arc_flag)} 0 {endx:.4f},{endy:.4f}'
-
-    return move + arc
-
-def circle_to_svg(segments, colors):
-    COLOR_LIST = [
-        '#ff0000', '#ffa3a3', # red
-        '#ffa100', '#ffdda3', # orange
-        '#24db00', '#b3eaa9', # green
-        '#00ebac', '#b9fae9', # teal
-        '#00b2ff', '#70d4ff', # cyan
-        '#0045e5', '#819fe5', # blue
-        '#5c0aff', '#b18aff', # purple
-        '#c00ddb', '#f08fff', # pink
-    ]
-
-    angles = [0.0]
-    total_segment = sum(segments)
-    segment_start = 0
-    for s in segments:
-        segment_start += s
-        angles.append(segment_start / total_segment * math.tau)
-
-    paths = []
-    for i, col in enumerate(colors):
-        d = make_arc(0, 0, 100, angles[i], angles[i+1])
-        path = f'<path d="{d}" fill="none" stroke="{COLOR_LIST[col]}" stroke-width="30" />'
-        paths.append(path)
-
-    return f'<svg width="100px" version="1.1" viewBox="-120 -120 240 240" xmlns="http://www.w3.org/2000/svg">{"".join(paths)}</svg>'
-
-def index_to_svg(i):
-    return circle_to_svg(*index_to_circle(i))
-
 if __name__ == '__main__':
-    #print(index_to_svg(912423234))
-    print(''.join(index_to_svg(random.randint(0, 309686528177530816)) for _ in range(256)))
+    print(index_to_circle(309686528177530815))

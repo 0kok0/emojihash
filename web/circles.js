@@ -7,11 +7,6 @@ let svg_area = document.getElementById("svg_area");
 let amount = document.getElementById("amount");
 let comment = document.getElementById("comment");
 
-
-window.onload = function() {
-
-}
-
 // Multiplies together [start, end] as a BigInt
 function multiply_range(start, end) {
   let res = 1n;
@@ -58,15 +53,6 @@ function circle_count(circle_slices, circle_segments, colors) {
   return [partitions, colorings];
 }
 
-function compress_digits(digits, bases) {
-  // Turns a set of digits and their bases into a single number
-  let n = 0n;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    n = n * bases[i] + digits[i];
-  }
-  return n;
-}
-
 function extract_digits(n, bases) {
   // Turns a number into a set of digits given a list of bases
   let digits = [];
@@ -79,73 +65,50 @@ function extract_digits(n, bases) {
   return digits;
 }
 
-// Perm functions from https://codegolf.stackexchange.com/a/115024
-function counter(s) {
-  let counts = {};
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] in counts) {
-      counts[s[i]] += 1n;
+// https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
+function star_bars_count(s, b) {
+  // Determines the number of permutations for this star and bar configuration
+  return combinations(s + b, b);
+}
+
+function star_bars_unrank(rank, stars, bars, groups = [0]) {
+  /*
+    Determine the group counts associated with the rank
+    for a given star and bar configuration.
+    Based off of perm_unrank from https://codegolf.stackexchange.com/a/115024
+
+    It works by building up the star and bar permutation by choosing either
+    a star or a bar to add. We remove the string representation of the
+    permutation here and just store the group counts that correspond to the
+    particular star and bar arrangement.
+    i.e. **||*| = [2, 0, 1, 0]
+    */
+  if (stars + bars < 2) {
+    if (bars == 1) {
+      groups.push(0);
     } else {
-      counts[s[i]] = 1n;
+      groups[groups.length - 1] += 1;
     }
-  }
-  return counts;
-}
 
-function perm_count(s) {
-  // Count the total number of permutations of sorted sequence `s`
-  let n = factorial(BigInt(s.length));
-  for (const [c, l] of Object.entries(counter(s))) {
-    n /= factorial(BigInt(l));
-  }
-  return n;
-}
-
-function perm_rank(target, base) {
-  // Determine the permutation rank of string `target`
-  // given the rank zero permutation string `base`,
-  // i.e., the chars in `base` are in lexicographic order.
-
-  if (target.length < 2) {
-    return 0n;
+    return groups;
   }
 
-  let total = 0n;
-  let head = target[0];
-  let newtarget = target.substring(1);
+  // Possible arrangements if we remove 1 star
+  let star_count = star_bars_count(stars - 1n, bars);
 
-  for (let i = 0; i < base.length; i++) {
-    const c = base[i];
-    const newbase = base.substring(0, i) + base.substring(i + 1);
-    if (c == head) {
-      return total + perm_rank(newtarget, newbase);
-    } else if (i != 0 && c == base[i - 1]) {
-      continue;
-    }
-    total += perm_count(newbase);
-  }
-}
-
-function perm_unrank(rank, base, head = "") {
-  // Determine the permutation with given rank of the
-  // rank zero permutation string `base`.
-  rank = BigInt(rank);
-
-  if (base.length < 2) {
-    return head + base;
+  // We're adding a star, so the last group increments
+  if (star_count > rank) {
+    groups[groups.length - 1] += 1;
+    return star_bars_unrank(rank, stars - 1n, bars, groups);
   }
 
-  let total = 0n;
-  for (let i = 0; i < base.length; i++) {
-    const c = base[i];
-    if (i < 1 || c != base[i - 1]) {
-      let newbase = base.substring(0, i) + base.substring(i + 1);
-      let newtotal = total + perm_count(newbase);
-      if (newtotal > rank) {
-        return perm_unrank(rank - total, newbase, head + c);
-      }
-      total = newtotal;
-    }
+  // Possible arrangements if we remove 1 bar
+  let bar_count = star_bars_count(stars, bars - 1n);
+
+  // We're adding a bar, so we're adding a new group
+  if (star_count + bar_count > rank) {
+    groups.push(0);
+    return star_bars_unrank(rank - star_count, stars, bars - 1n, groups);
   }
 }
 
@@ -184,15 +147,11 @@ function extract(index, range_data, N, color_count) {
 
   // The bases are arranged [partition base, color 1, color 2, ...]
   let [partition, ...colors] = extract_digits(index, bases);
-  // console.log(`Extract: ${index} ${partition} ${colors}`);
-  // Now we go from partition index to segment lengths. I think this part could be made more efficient
-  let unranked = perm_unrank(
-    partition,
-    "*".repeat(Number(N - K)) + "|".repeat(Number(K - 1n))
-  );
-  let segments = [];
-  for (const s of unranked.split("|")) {
-    segments.push(s.length + 1);
+
+  // Now we go from partition index to segment lengths.
+  let segments = star_bars_unrank(partition, N - K, K - 1n);
+  for (let i = 0; i < segments.length; i++) {
+    segments[i] += 1;
   }
 
   return [segments, adjust_colors(colors)];
@@ -349,7 +308,6 @@ function validate_input() {
   let C = split_colors.length;
 
   if (P > C) {
-    console.log(`err2 ${N} ${P} ${C}`);
     error.innerText = "Segments cannot be greater than color count.";
     return false;
   }
