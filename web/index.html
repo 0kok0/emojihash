@@ -36,10 +36,19 @@
       <input type="number" id="amount" name="amount" min="1" max="1024" value="32">
     </div>
     <div>
-      <button id="generate">Generate</button>
-      <span id="error"></span>
+      <button id="generate_random">Generate random circles</button>
     </div>
-    <div><span id="comment"></span></div>
+    <div>
+      <label for="start">Circles range [</label>
+      <input type="number" id="start" name="start" min="0" value="0">
+      <span>, </span>
+      <input type="number" id="stop" name="stop" min="0" value="32">
+      <span>]</span>
+    </div>
+    <div>
+      <button id="generate_range">Generate circle range</button>
+    </div>
+    <div><span id="error"></span><span id="comment"></span></div>
     <div id="svg_area"></div>
 
     <script src="circles.js"></script>

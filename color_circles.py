@@ -34,12 +34,15 @@ def star_bars_unrank(rank, stars, bars, groups=None):
     if groups == None:
         groups = [0]
 
-    if (stars + bars) < 2:
-        if bars == 1:
+    # Return if we only have one choice left
+    if stars == 0 or bars == 0:
+        while bars > 0:
             groups.append(0)
+            bars -= 1
 
-        if stars == 1:
+        while stars > 0:
             groups[-1] += 1
+            stars -= 1
 
         return groups
 
@@ -123,4 +126,32 @@ def index_to_circle(i):
         return extract(i - 18656187424378816, 30, 10, [10015005, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7])
 
 if __name__ == '__main__':
+    print(index_to_circle(0))
+    print(index_to_circle(15))
+
+    print(index_to_circle(16))
+    print(index_to_circle(6975))
+
+    print(index_to_circle(6976))
+    print(index_to_circle(1371135))
+
+    print(index_to_circle(1371136))
+    print(index_to_circle(160977855))
+
+    print(index_to_circle(160977856))
+    print(index_to_circle(12610302015))
+
+    print(index_to_circle(12610302016))
+    print(index_to_circle(697323130815))
+
+    print(index_to_circle(697323130816))
+    print(index_to_circle(28085836282815))
+
+    print(index_to_circle(28085836282816))
+    print(index_to_circle(838003296634815))
+
+    print(index_to_circle(838003296634816))
+    print(index_to_circle(18656187424378815))
+
+    print(index_to_circle(18656187424378816))
     print(index_to_circle(309686528177530815))

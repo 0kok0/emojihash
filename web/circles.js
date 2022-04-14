@@ -1,11 +1,14 @@
 let pieces = document.getElementById("pieces");
 let segments = document.getElementById("segments");
 let colors = document.getElementById("colors");
-let generate = document.getElementById("generate");
-let error = document.getElementById("error");
-let svg_area = document.getElementById("svg_area");
 let amount = document.getElementById("amount");
+let generate_rand = document.getElementById("generate_random");
+let start_index = document.getElementById("start");
+let stop_index = document.getElementById("stop");
+let generate_range = document.getElementById("generate_range");
+let error = document.getElementById("error");
 let comment = document.getElementById("comment");
+let svg_area = document.getElementById("svg_area");
 
 // Multiplies together [start, end] as a BigInt
 function multiply_range(start, end) {
@@ -83,11 +86,16 @@ function star_bars_unrank(rank, stars, bars, groups = [0]) {
     particular star and bar arrangement.
     i.e. **||*| = [2, 0, 1, 0]
     */
-  if (stars + bars < 2) {
-    if (bars == 1) {
+
+  // Return if we only have one choice left
+  if (stars == 0n || bars == 0n) {
+    while (bars > 0n) {
       groups.push(0);
-    } else {
+      bars -= 1n;
+    }
+    while (stars > 0n) {
       groups[groups.length - 1] += 1;
+      stars -= 1n;
     }
 
     return groups;
@@ -247,7 +255,7 @@ function circle_to_svg(segments, colors, color_list) {
   )}</svg>`;
 }
 
-function generate_circles() {
+function generate_circles(do_random) {
   comment.innerText = "";
   if (!validate_input()) {
     return;
@@ -272,19 +280,40 @@ function generate_circles() {
     result[result.length - 1].max_index
   }`;
 
-  // TODO: Not sure how to generate random BigInt numbers outside of the Number range
-  let rand_range;
-  if (result[result.length - 1].max_index > BigInt(Number.MAX_SAFE_INTEGER)) {
-    comment.innerHTML += `<br/>Notice: Due to some issues, we're only able to generate indexes up to ${Number.MAX_SAFE_INTEGER}`;
-    rand_range = Number.MAX_SAFE_INTEGER;
-  } else {
-    rand_range = Number(result[result.length - 1].max_index);
-  }
+  if (do_random) {
+    // TODO: Not sure how to generate random BigInt numbers outside of the Number range
+    let rand_range;
+    if (result[result.length - 1].max_index > BigInt(Number.MAX_SAFE_INTEGER)) {
+      comment.innerHTML += `<br/>Notice: Due to some issues, we're only able to generate indexes up to ${Number.MAX_SAFE_INTEGER}`;
+      rand_range = Number.MAX_SAFE_INTEGER;
+    } else {
+      rand_range = Number(result[result.length - 1].max_index);
+    }
 
-  for (let i = 0; i < parseInt(amount.value); i++) {
-    let index = BigInt(Math.floor(Math.random() * rand_range));
-    let [segments, colors] = index_to_circle(index, circles);
-    svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
+    for (let i = 0; i < parseInt(amount.value); i++) {
+      let index = BigInt(Math.floor(Math.random() * rand_range));
+      let [segments, colors] = index_to_circle(index, circles);
+      svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
+    }
+  } else {
+    let max_val = result[result.length - 1].max_index;
+    let start = BigInt(start_index.value);
+    let stop = BigInt(stop_index.value);
+
+    if (stop < start) {
+      error.innerText = "Range start cannot be after stop.";
+      return;
+    }
+
+    if (stop >= max_val || start >= max_val) {
+      error.innerText = "Start or stop outside of allowable circle indices";
+      return;
+    }
+
+    for (let i = start; i <= stop; i++) {
+      let [segments, colors] = index_to_circle(i, circles);
+      svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
+    }
   }
 }
 
@@ -316,4 +345,5 @@ function validate_input() {
   return true;
 }
 
-generate.onclick = generate_circles;
+generate_rand.onclick = () => generate_circles(true);
+generate_range.onclick = () => generate_circles(false);
