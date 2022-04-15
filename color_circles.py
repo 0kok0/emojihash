@@ -1,7 +1,8 @@
 import math
 import random
-from math import factorial as fac, comb
+from math import factorial as fac, comb, perm
 from itertools import groupby
+from dataclasses import dataclass
 
 
 def extract_digits(n, bases):
@@ -81,77 +82,91 @@ def adjust_colors(colors):
     return adjusted
 
 
-def extract(index, N, K, bases):
+def extract(index, range_data, N, color_count):
+    K = range_data.segments
+    max_index = range_data.max_index
+    count = range_data.range
+
+    bases = [range_data.partitions]
+    for n in range(color_count, color_count - K, -1):
+        bases.append(n)
+
     # The bases are arranged [partition base, color 1, color 2, ...]
     [partition, *colors] = extract_digits(index, bases)
-    # Now we go from partition index to segment lengths
+    # Now we go from partition index to segment lengths.
     segments = [s + 1 for s in star_bars_unrank(partition, N - K, K - 1)]
-    return (segments, adjust_colors(colors))
+    return (tuple(segments), tuple(adjust_colors(colors)))
 
 
-def index_to_circle(i):
-    """
-    Returns a tuple of circle segments lengths and colors based on an integer
-    between 0 and 309686528177530816.
-    """
-    # 1 segments
-    if i < 16:
-        return extract(i - 0, 30, 1, [1, 16])
-    # 2 segments
-    if i < 6976:
-        return extract(i - 16, 30, 2, [29, 16, 15])
-    # 3 segments
-    if i < 1371136:
-        return extract(i - 6976, 30, 3, [406, 16, 15, 14])
-    # 4 segments
-    if i < 160977856:
-        return extract(i - 1371136, 30, 4, [3654, 16, 15, 14, 13])
-    # 5 segments
-    if i < 12610302016:
-        return extract(i - 160977856, 30, 5, [23751, 16, 15, 14, 13, 12])
-    # 6 segments
-    if i < 697323130816:
-        return extract(i - 12610302016, 30, 6, [118755, 16, 15, 14, 13, 12, 11])
-    # 7 segments
-    if i < 28085836282816:
-        return extract(i - 697323130816, 30, 7, [475020, 16, 15, 14, 13, 12, 11, 10])
-    # 8 segments
-    if i < 838003296634816:
-        return extract(i - 28085836282816, 30, 8, [1560780, 16, 15, 14, 13, 12, 11, 10, 9])
-    # 9 segments
-    if i < 18656187424378816:
-        return extract(i - 838003296634816, 30, 9, [4292145, 16, 15, 14, 13, 12, 11, 10, 9, 8])
-    # 10 segments
-    if i < 309686528177530816:
-        return extract(i - 18656187424378816, 30, 10, [10015005, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7])
+def circle_count(circle_slices: int, circle_segments: int, colors: int):
+    # First we count the ways we can distribute the slices among the segments
+    # with each segment having at least 1 slice
+    partitions = comb(circle_slices - 1, circle_segments - 1)
+
+    # Then how many ways we can color the segments uniquely
+    colorings = perm(colors, circle_segments)
+
+    return (partitions, colorings)
+
+
+@dataclass
+class CircleRange:
+    max_index: int
+    range: int
+    partitions: int
+    segments: int
+
+def generate_ranges(slices: int, max_segments: int, colors: int):
+    circle_ranges = []
+
+    i = 0
+    for K in range(1, max_segments + 1):
+        partitions, colorings = circle_count(slices, K, colors)
+        count = partitions * colorings
+
+        circle_ranges.append(CircleRange(
+          max_index = i + count,
+          range = count,
+          partitions = partitions,
+          segments = K,
+        ))
+        i += count
+
+    return circle_ranges
+
+
+def index_to_circle(index, circle_ranges, pieces, color_count):
+    range_i = 0
+    while index >= circle_ranges[range_i].max_index:
+        range_i += 1
+
+    circle_range = circle_ranges[range_i]
+    offset = circle_range.max_index - circle_range.range
+
+    return extract(
+        index - offset,
+        circle_range,
+        pieces,
+        color_count
+    )
 
 if __name__ == '__main__':
-    print(index_to_circle(0))
-    print(index_to_circle(15))
+    N = 6 # pieces of the circle
+    P = 6 # segments to group pieces into
+    C = 8 # number of colors we have to color the segments
 
-    print(index_to_circle(16))
-    print(index_to_circle(6975))
+    circle_ranges = generate_ranges(N, P, C)
+    print(f'Total circles: {circle_ranges[-1].max_index}')
+    for r in circle_ranges:
+        start = r.max_index - r.range
+        stop = r.max_index - 1
+        print(index_to_circle(start, circle_ranges, N, C))
+        print(index_to_circle(stop, circle_ranges, N, C))
 
-    print(index_to_circle(6976))
-    print(index_to_circle(1371135))
+    max_i = min(circle_ranges[-1].max_index, 100000)
 
-    print(index_to_circle(1371136))
-    print(index_to_circle(160977855))
+    all_circles = set()
+    for i in range(max_i):
+        all_circles.add(index_to_circle(i, circle_ranges, N, C))
 
-    print(index_to_circle(160977856))
-    print(index_to_circle(12610302015))
-
-    print(index_to_circle(12610302016))
-    print(index_to_circle(697323130815))
-
-    print(index_to_circle(697323130816))
-    print(index_to_circle(28085836282815))
-
-    print(index_to_circle(28085836282816))
-    print(index_to_circle(838003296634815))
-
-    print(index_to_circle(838003296634816))
-    print(index_to_circle(18656187424378815))
-
-    print(index_to_circle(18656187424378816))
-    print(index_to_circle(309686528177530815))
+    print(len(all_circles), max_i)

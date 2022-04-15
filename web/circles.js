@@ -45,17 +45,6 @@ function combinations(n, r) {
   return numer / denom;
 }
 
-function circle_count(circle_slices, circle_segments, colors) {
-  // First we count the ways we can distribute the slices among the segments
-  // with each segment having at least 1 slice
-  partitions = combinations(circle_slices - 1n, circle_segments - 1n);
-
-  // Then how many ways we can color the segments uniquely
-  colorings = permutations(colors, circle_segments);
-
-  return [partitions, colorings];
-}
-
 function extract_digits(n, bases) {
   // Turns a number into a set of digits given a list of bases
   let digits = [];
@@ -165,6 +154,17 @@ function extract(index, range_data, N, color_count) {
   return [segments, adjust_colors(colors)];
 }
 
+function circle_count(circle_slices, circle_segments, colors) {
+  // First we count the ways we can distribute the slices among the segments
+  // with each segment having at least 1 slice
+  partitions = combinations(circle_slices - 1n, circle_segments - 1n);
+
+  // Then how many ways we can color the segments uniquely
+  colorings = permutations(colors, circle_segments);
+
+  return [partitions, colorings];
+}
+
 function generate_ranges(slices, max_segments, colors) {
   let result = [];
 
@@ -176,10 +176,6 @@ function generate_ranges(slices, max_segments, colors) {
   for (let K = 1n; K <= max_segments; K++) {
     let [partitions, colorings] = circle_count(slices, K, colors);
     let count = partitions * colorings;
-    let bases = [partitions];
-    for (let n = colors; n > colors - K; n--) {
-      bases.push(n);
-    }
 
     result.push({
       max_index: i + count,
