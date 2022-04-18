@@ -1,8 +1,7 @@
-import math
-import random
 from math import factorial as fac, comb, perm
-from itertools import groupby
 from dataclasses import dataclass
+from typing import Iterable, Tuple
+import time
 
 
 def extract_digits(n, bases):
@@ -84,8 +83,6 @@ def adjust_colors(colors):
 
 def extract(index, range_data, N, color_count):
     K = range_data.segments
-    max_index = range_data.max_index
-    count = range_data.range
 
     bases = [range_data.partitions]
     for n in range(color_count, color_count - K, -1):
@@ -98,10 +95,10 @@ def extract(index, range_data, N, color_count):
     return (tuple(segments), tuple(adjust_colors(colors)))
 
 
-def circle_count(circle_slices: int, circle_segments: int, colors: int):
-    # First we count the ways we can distribute the slices among the segments
+def circle_count(circle_pieces: int, circle_segments: int, colors: int):
+    # First we count the ways we can distribute the pieces among the segments
     # with each segment having at least 1 slice
-    partitions = comb(circle_slices - 1, circle_segments - 1)
+    partitions = comb(circle_pieces - 1, circle_segments - 1)
 
     # Then how many ways we can color the segments uniquely
     colorings = perm(colors, circle_segments)
@@ -111,62 +108,110 @@ def circle_count(circle_slices: int, circle_segments: int, colors: int):
 
 @dataclass
 class CircleRange:
+    min_index: int
     max_index: int
-    range: int
+    size: int
     partitions: int
     segments: int
 
-def generate_ranges(slices: int, max_segments: int, colors: int):
-    circle_ranges = []
 
-    i = 0
-    for K in range(1, max_segments + 1):
-        partitions, colorings = circle_count(slices, K, colors)
-        count = partitions * colorings
+class ColoredCircles:
+    """
+    Class to map indexes to uniquely colored and segmented circles.
 
-        circle_ranges.append(CircleRange(
-          max_index = i + count,
-          range = count,
-          partitions = partitions,
-          segments = K,
-        ))
-        i += count
+    Circles are split into pieces which then get merged into segments which
+    are then uniquely colored.
 
-    return circle_ranges
+    circle_pieces: The number of pieces the overall circle is split up into.
+    allowable_segment_counts: A list of segment counts that we want to allow
+        circles to group the pieces into. For instance, [1, 2, 3] will allow
+        indexes to map to circles that have 1, 2, or 3 segments made from the
+        circle pieces.
+    color_count: How many colors are available to color the segments.
+    """
+    def __init__(self, circle_pieces: int, allowable_segment_counts: Iterable[int], color_count: int):
+        self.pieces = circle_pieces
+        self.color_count = color_count
+        self.ranges = []
 
+        i = 0
+        for K in allowable_segment_counts:
+            partitions, colorings = circle_count(self.pieces, K, color_count)
+            count = partitions * colorings
 
-def index_to_circle(index, circle_ranges, pieces, color_count):
-    range_i = 0
-    while index >= circle_ranges[range_i].max_index:
-        range_i += 1
+            self.ranges.append(CircleRange(
+              min_index = i,
+              max_index = i + count - 1,
+              size = count,
+              partitions = partitions,
+              segments = K,
+            ))
+            i += count
 
-    circle_range = circle_ranges[range_i]
-    offset = circle_range.max_index - circle_range.range
+        self.total_circles = self.ranges[-1].max_index + 1
 
-    return extract(
-        index - offset,
-        circle_range,
-        pieces,
-        color_count
-    )
+    def index_to_circle(self, index: int) -> Tuple[Tuple[int], Tuple[int]]:
+        """
+        Given an index, returns a tuple of segment lengths and segment colors.
+        The segment lengths sum up to the circle_pieces specified in the
+        constructor. And the colors are indexes up to the color_count specified.
+
+        Ex. A return value of ((1,2,3), (0, 2, 1)) describes a circle where the
+        first segment is made up of 1 circle piece and is the 0th color. The
+        second segment has 2 pieces and is the 2nd color. The third segment has
+        3 pieces and is the 1st color.
+        """
+        if not (0 <= index <= self.ranges[-1].max_index):
+            raise ValueError(f"The index {index} is out of range")
+
+        range_i = 0
+        while index > self.ranges[range_i].max_index:
+            range_i += 1
+
+        circle_range = self.ranges[range_i]
+        offset = circle_range.max_index - circle_range.size + 1
+
+        return extract(
+            index - offset,
+            circle_range,
+            self.pieces,
+            self.color_count
+        )
+        
 
 if __name__ == '__main__':
     N = 6 # pieces of the circle
     P = 6 # segments to group pieces into
     C = 8 # number of colors we have to color the segments
 
-    circle_ranges = generate_ranges(N, P, C)
-    print(f'Total circles: {circle_ranges[-1].max_index}')
-    for r in circle_ranges:
-        start = r.max_index - r.range
-        stop = r.max_index - 1
-        print(index_to_circle(start, circle_ranges, N, C))
-        print(index_to_circle(stop, circle_ranges, N, C))
+    colored_circles = ColoredCircles(N, range(1, P + 1), C)
 
-    max_i = min(circle_ranges[-1].max_index, 100000)
+    print(f'Total circles: {colored_circles.total_circles}')
+    for r in colored_circles.ranges:
+        start = r.max_index - r.size + 1
+        stop = r.max_index
+        print(colored_circles.index_to_circle(start))
+        print(colored_circles.index_to_circle(stop))
 
+    
     all_circles = set()
-    for i in range(max_i):
-        all_circles.add(index_to_circle(i, circle_ranges, N, C))
+    expected_length = min(colored_circles.total_circles, 100000)
 
-    print(len(all_circles), max_i)
+    start_time = time.time()
+    for i in range(expected_length):
+        all_circles.add(colored_circles.index_to_circle(i))
+    stop_time = time.time()
+
+    assert(len(all_circles) == expected_length)
+    print(f"{expected_length} unique circle arrangments were generated correctly")
+    print(f"{(stop_time - start_time) / expected_length * 1000000:.3f} us per circle generation")
+
+    try:
+        all_circles.add(colored_circles.index_to_circle(-1))
+    except ValueError as e:
+        print(e)
+
+    try:
+        all_circles.add(colored_circles.index_to_circle(colored_circles.total_circles))
+    except ValueError as e:
+        print(e)
