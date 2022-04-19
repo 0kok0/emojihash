@@ -63,7 +63,7 @@ def star_bars_unrank(rank, stars, bars, groups=None):
         return star_bars_unrank(rank - star_count, stars, bars - 1, groups)
 
 
-def adjust_colors(colors):
+def adjust_colors(colors, color_count):
     """
     The original color index list needs to be processed so that each
     index is in reference to the entire list of colors. Before processing
@@ -73,11 +73,10 @@ def adjust_colors(colors):
     assuming the previous 0's are popped off. So when the are inserted back
     in, the seconds 0's become 1 and 2 respectively.
     """
-    adjusted = []
-    for i, c in enumerate(colors):
-        # A color index needs to be incremented as many times as there are
-        # colors that were used before it that were at a lower index than it
-        adjusted.append(c + sum(c >= o for o in colors[:i]))
+
+    indexes = list(range(color_count))
+    adjusted = [indexes.pop(c) for c in colors]
+
     return adjusted
 
 
@@ -92,7 +91,7 @@ def extract(index, range_data, N, color_count):
     [partition, *colors] = extract_digits(index, bases)
     # Now we go from partition index to segment lengths.
     segments = [s + 1 for s in star_bars_unrank(partition, N - K, K - 1)]
-    return (tuple(segments), tuple(adjust_colors(colors)))
+    return (tuple(segments), tuple(adjust_colors(colors, color_count)))
 
 
 def circle_count(circle_pieces: int, circle_segments: int, colors: int):

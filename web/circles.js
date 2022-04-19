@@ -109,21 +109,19 @@ function star_bars_unrank(rank, stars, bars, groups = [0]) {
   }
 }
 
-function adjust_colors(colors) {
+function adjust_colors(colors, color_count) {
   // The original color index list needs to be processed so that each
   // index is in reference to the entire list of colors. Before processing
   // each subsequent index assumes the previous color was removed.
 
-  let adjusted = [];
-  for (let i = 0; i < colors.length; i++) {
-    let adjustment = 0n;
-    for (let p = 0; p < i; p++) {
-      if (colors[i] >= colors[p]) {
-        adjustment += 1n;
-      }
-    }
+  let indexes = [];
+  for (let i = 0; i < color_count; i++) {
+    indexes.push(i);
+  }
 
-    adjusted.push(colors[i] + adjustment);
+  let adjusted = [];
+  for (let c of colors) {
+    adjusted.push(indexes.splice(Number(c), 1)[0]);
   }
   return adjusted;
 }
@@ -151,7 +149,7 @@ function extract(index, range_data, N, color_count) {
     segments[i] += 1;
   }
 
-  return [segments, adjust_colors(colors)];
+  return [segments, adjust_colors(colors, color_count)];
 }
 
 function circle_count(circle_slices, circle_segments, colors) {
