@@ -201,7 +201,12 @@ if __name__ == '__main__':
         all_circles.add(colored_circles.index_to_circle(i))
     stop_time = time.time()
 
-    assert(len(all_circles) == expected_length)
+    for c in all_circles:
+        assert len(set(c[1])) == len(c[1]), "Colors indexes must be unique"
+        assert all(0 <= color < C for color in c[1]), "Color indexes must be within range"
+        assert sum(c[0]) == N, "Segment lengths must sum to pieces count"
+
+    assert (len(all_circles) - 1) == expected_length, "All circles must be unique"
     print(f"{expected_length} unique circle arrangments were generated correctly")
     print(f"{(stop_time - start_time) / expected_length * 1000000:.3f} us per circle generation")
 
