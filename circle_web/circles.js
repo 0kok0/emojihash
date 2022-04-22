@@ -6,6 +6,8 @@ let generate_rand = document.getElementById("generate_random");
 let start_index = document.getElementById("start");
 let stop_index = document.getElementById("stop");
 let generate_range = document.getElementById("generate_range");
+let circle_index = document.getElementById("circle_index");
+let generate_single = document.getElementById("generate_single");
 let error = document.getElementById("error");
 let comment = document.getElementById("comment");
 let svg_area = document.getElementById("svg_area");
@@ -249,7 +251,7 @@ function circle_to_svg(segments, colors, color_list) {
   )}</svg>`;
 }
 
-function generate_circles(do_random) {
+function generate_circles(mode) {
   comment.innerText = "";
   if (!validate_input()) {
     return;
@@ -274,7 +276,7 @@ function generate_circles(do_random) {
     result[result.length - 1].max_index
   }`;
 
-  if (do_random) {
+  if (mode == "random") {
     // TODO: Not sure how to generate random BigInt numbers outside of the Number range
     let rand_range;
     if (result[result.length - 1].max_index > BigInt(Number.MAX_SAFE_INTEGER)) {
@@ -289,7 +291,7 @@ function generate_circles(do_random) {
       let [segments, colors] = index_to_circle(index, circles);
       svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
     }
-  } else {
+  } else if (mode == "range") {
     let max_val = result[result.length - 1].max_index;
     let start = BigInt(start_index.value);
     let stop = BigInt(stop_index.value);
@@ -299,7 +301,7 @@ function generate_circles(do_random) {
       return;
     }
 
-    if (stop >= max_val || start >= max_val) {
+    if (stop < 0 || stop >= max_val || start < 0 || start >= max_val) {
       error.innerText = "Start or stop outside of allowable circle indices";
       return;
     }
@@ -308,6 +310,17 @@ function generate_circles(do_random) {
       let [segments, colors] = index_to_circle(i, circles);
       svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
     }
+  } else if (mode == "single") {
+    let max_val = result[result.length - 1].max_index;
+    let i = BigInt(circle_index.value);
+
+    if (i < 0 || i >= max_val) {
+      error.innerText = "Index outside of allowable circle indices";
+      return;
+    }
+
+    let [segments, colors] = index_to_circle(i, circles);
+    svg_area.innerHTML += circle_to_svg(segments, colors, color_list);
   }
 }
 
@@ -339,5 +352,7 @@ function validate_input() {
   return true;
 }
 
-generate_rand.onclick = () => generate_circles(true);
-generate_range.onclick = () => generate_circles(false);
+generate_rand.onclick = () => generate_circles("random");
+generate_range.onclick = () => generate_circles("range");
+generate_single.onclick = () => generate_circles("single");
+

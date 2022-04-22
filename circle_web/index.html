@@ -48,7 +48,14 @@
     <div>
       <button id="generate_range">Generate circle range</button>
     </div>
-    <div><span id="error"></span><span id="comment"></span></div>
+    <div>
+      <label for="start">Circle index: </label>
+      <input type="number" id="circle_index" name="circle_index" min="0" value="0">
+    </div>
+    <div>
+      <button id="generate_single">Generate single circle</button>
+    </div>
+    <div><span id="error"></span><br/><span id="comment"></span></div>
     <div id="svg_area"></div>
 
     <script src="circles.js"></script>
