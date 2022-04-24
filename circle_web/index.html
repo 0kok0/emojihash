@@ -1,0 +1,63 @@
+<html>
+<head> </head>
+<body>
+
+    <div>
+      <label for="pieces">Pieces (N)</label>
+      <input type="number" id="pieces" name="pieces" min="1" max="100" value="30">
+    </div>
+    <div>
+      <label for="segments">Segments (P)</label>
+      <input type="number" id="segments" name="segments" min="1" max="100" value="10">
+    </div>
+    <div>
+      <label for="colors">Colors (C)</label>
+      <br />
+      <textarea id="colors" name="colors" rows="16" cols="16">
+#ff0000
+#ffa3a3
+#ffa100
+#ffdda3
+#24db00
+#b3eaa9
+#00ebac
+#b9fae9
+#00b2ff
+#70d4ff
+#0045e5
+#819fe5
+#5c0aff
+#b18aff
+#c00ddb
+#f08fff</textarea>
+    </div>
+    <div>
+      <label for="amount">Circles to generate</label>
+      <input type="number" id="amount" name="amount" min="1" max="1024" value="32">
+    </div>
+    <div>
+      <button id="generate_random">Generate random circles</button>
+    </div>
+    <div>
+      <label for="start">Circles range [</label>
+      <input type="number" id="start" name="start" min="0" value="0">
+      <span>, </span>
+      <input type="number" id="stop" name="stop" min="0" value="32">
+      <span>]</span>
+    </div>
+    <div>
+      <button id="generate_range">Generate circle range</button>
+    </div>
+    <div>
+      <label for="start">Circle index: </label>
+      <input type="number" id="circle_index" name="circle_index" min="0" value="0">
+    </div>
+    <div>
+      <button id="generate_single">Generate single circle</button>
+    </div>
+    <div><span id="error"></span><br/><span id="comment"></span></div>
+    <div id="svg_area"></div>
+
+    <script src="circles.js"></script>
+</body>
+</html>
