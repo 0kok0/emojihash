@@ -4,8 +4,6 @@ secure emojihash map for hex strings
 $ python3 main.py B8B92Cc1Fbe8E425184769B296BAD43245Ad2C84
 > 🌙🔕🏒🍝🥁🏟🐽😳🌲🏈🍁🕘👶😠🧸💙
 ```
-# parameter analysis 
-![Parameter_analysis_-4](https://user-images.githubusercontent.com/61156799/157858715-baad27b4-6988-420c-8b13-be1f535b7fd6.png)
 
 # Colored circles
 
@@ -35,5 +33,10 @@ colored_circles.index_to_circle(1234)
 # We could now use this to make an svg of a circle.
 ```
 
-This repository uses [famed](https://famed.morphysm.com/boards/0kok0/emojihash) to reward contributions. Visit https://www.famed.morphysm.com to learn more about how to get famed or get in touch: contact@morphysm.com
+# Parameter analysis
+![Parameter analysis page 1](https://user-images.githubusercontent.com/9531780/165885574-4691f03f-cdcd-427f-b5c5-8cc3f072d2e2.png)
+![Parameter analysis page 2](https://user-images.githubusercontent.com/9531780/165885585-2566fb75-d3ec-46de-b5a3-9941b7742ce1.png)
+![Parameter analysis page 3](https://user-images.githubusercontent.com/9531780/165885588-5abc541e-769e-4e21-aed4-a3611ee8cc10.png)
 
+
+This repository uses [famed](https://famed.morphysm.com/boards/0kok0/emojihash) to reward contributions. Visit https://www.famed.morphysm.com to learn more about how to get famed or get in touch: contact@morphysm.com
