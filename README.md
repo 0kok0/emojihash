@@ -9,7 +9,16 @@ $ python3 main.py B8B92Cc1Fbe8E425184769B296BAD43245Ad2C84
 
 # Colored circles
 
-Check out the web demo in circle_web for an interactive example.
+Check out the web demo in circle_web for an interactive example. All you need to do is open
+[index.html](circle_web/index.html) in a web browser.
+
+Example with 105 circles and parameters length N=3, colors C=5 and 1 to 3 segments K.
+
+![Example circles](docs/circles_example.png)
+
+A python library is also available to generate the data for these colored circles easily.
+To use it, just put [color_circles.py](color_circles.py) in the same directory as your python file.
+
 Example python code.
 ```python
 from color_circles import ColoredCircles
